@@ -20,7 +20,7 @@ public class BoidController : MonoBehaviour {
 		crowders = new List<GameObject> ();
 	}
 	
-	void Update () {
+	void FixedUpdate () {
 		Flock ();
 	}
 
