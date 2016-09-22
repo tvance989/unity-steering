@@ -2,15 +2,15 @@
 using System.Collections;
 
 public class ElbowRoomController : MonoBehaviour {
-	public BoidController boid;
+	public GameObject boid;
 
 	void OnTriggerEnter(Collider other) {
 		if (other.gameObject.CompareTag ("Boid"))
-			boid.AddCrowder (other.gameObject);
+			boid.SendMessage ("AddCrowder", other.gameObject);
 	}
 
 	void OnTriggerExit(Collider other) {
 		if (other.gameObject.CompareTag ("Boid"))
-			boid.RemoveCrowder (other.gameObject);
+			boid.SendMessage ("RemoveCrowder", other.gameObject);
 	}
 }

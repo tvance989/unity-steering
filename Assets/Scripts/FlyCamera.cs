@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class CameraController : MonoBehaviour
+public class FlyCamera : MonoBehaviour
 {
 
 	/*
@@ -22,10 +22,10 @@ public class CameraController : MonoBehaviour
 	*/
 
 	public float cameraSensitivity = 90;
-	public float climbSpeed = 4;
+	public float climbSpeed = 10;
 	public float normalMoveSpeed = 10;
 	public float slowMoveFactor = 0.25f;
-	public float fastMoveFactor = 3;
+	public float fastMoveFactor = 5;
 
 	private float rotationX = 0.0f;
 	private float rotationY = 0.0f;

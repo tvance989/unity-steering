@@ -2,87 +2,47 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class BoidController : MonoBehaviour {
-	public float separationWeight;
-	public float alignmentWeight;
-	public float cohesionWeight;
+public class BoidController : Vehicle {
+	public float separationWeight = 4f;
+	public float alignmentWeight = 5f;
+	public float cohesionWeight = 3f;
 
-	public float maxSpeed;
-	public float maxForce;
+	protected List<GameObject> neighbors;
+	protected List<GameObject> crowders;
 
-	private Rigidbody rb;
-	private List<GameObject> neighbors;
-	private List<GameObject> crowders;
+	protected Renderer renderer;
 
-	void Start () {
-		rb = GetComponent<Rigidbody> ();
+	protected void Start () {
+		base.Start ();
+
 		neighbors = new List<GameObject> ();
 		crowders = new List<GameObject> ();
-	}
-	
-	void FixedUpdate () {
-		Flock ();
+
+		renderer = GetComponent<Renderer> ();
 	}
 
-	void Flock() {
-		rb.AddForce (Separate () * separationWeight);
-		rb.AddForce (Align () * alignmentWeight);
-		rb.AddForce (Cohere () * cohesionWeight);
-	}
+	protected void Update () {
+//		transform.rotation = Quaternion.LookRotation (rb.velocity);
 
-	Vector3 Separate() {
-		Vector3 v = new Vector3 (0, 0, 0);
-		if (crowders.Count == 0)
-			return v;
-
-		foreach (GameObject boid in crowders) {
-			Vector3 away = gameObject.transform.position - boid.transform.position;
-			v += away.normalized / away.magnitude;
-		}
-
-		return Steer (v.normalized * maxSpeed);
-	}
-
-	Vector3 Align() {
-		Vector3 v = new Vector3 (0, 0, 0);
-		if (neighbors.Count == 0)
-			return v;
-
-		foreach (GameObject boid in neighbors)
-			v += boid.GetComponent<Rigidbody> ().velocity;
-
-		return Steer (v.normalized * maxSpeed);
-	}
-
-	Vector3 Cohere() {
-		Vector3 centerOfMass = new Vector3 (0, 0, 0);
-		if (neighbors.Count == 0)
-			return centerOfMass;
-
-		foreach (GameObject boid in neighbors)
-			centerOfMass += boid.transform.position;
-
-		return Arrive (centerOfMass / neighbors.Count);
-	}
-
-	Vector3 Arrive(Vector3 target) {
-		Vector3 desired = target - gameObject.transform.position;
-		float d = desired.magnitude;
-
-		float arbitrary = 5f;
-		if (d < arbitrary)
-			desired = desired.normalized * d * maxSpeed / arbitrary;
+		if (crowders.Count > 0)
+			renderer.material.color = Color.red;
 		else
-			desired = desired.normalized * maxSpeed;
-
-		return Steer (desired);
+			if (neighbors.Count > 1)
+				renderer.material.color = Color.green;
+			else if (neighbors.Count == 1)
+				renderer.material.color = Color.yellow;
+			else
+				renderer.material.color = Color.black;
 	}
 
-	Vector3 Steer(Vector3 desired) {
-		Vector3 steering = desired - rb.velocity;
-		if (steering.magnitude > maxForce)
-			return steering.normalized * maxForce;
-		return steering;
+	protected void FixedUpdate() {
+		Vector3 force = Vector3.zero;
+
+		force += Separate (crowders.ToArray ()) * separationWeight;
+		force += Align (neighbors.ToArray ()) * alignmentWeight;
+		force += Cohere (neighbors.ToArray ()) * cohesionWeight;
+
+		rb.AddForce (Vector3.ClampMagnitude (force, maxForce));
 	}
 
 	public void AddNeighbor(GameObject boid) {

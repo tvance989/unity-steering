@@ -1,16 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class NeighborhoodController : MonoBehaviour {
-	public GameObject boid;
+public class PreyRange : MonoBehaviour {
+	public BoidController predator;
 
 	void OnTriggerEnter(Collider other) {
 		if (other.gameObject.CompareTag ("Boid"))
-			boid.SendMessage ("AddNeighbor", other.gameObject);
+			predator.AddNeighbor (other.gameObject);
 	}
 
 	void OnTriggerExit(Collider other) {
 		if (other.gameObject.CompareTag ("Boid"))
-			boid.SendMessage ("RemoveNeighbor", other.gameObject);
+			predator.RemoveNeighbor (other.gameObject);
 	}
 }
