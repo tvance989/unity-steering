@@ -13,6 +13,6 @@ public class TesterController : MonoBehaviour {
 	}
 	
 	void FixedUpdate () {
-		rb.AddForce (vehicle.Follow (mark, 2));
+		rb.AddForce (vehicle.Evade (mark));
 	}
 }

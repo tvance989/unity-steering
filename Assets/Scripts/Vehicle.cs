@@ -12,10 +12,12 @@ public class Vehicle : MonoBehaviour {
 		rb = GetComponent<Rigidbody> ();
 	}
 
+	/** steering force = desired velocity - current velocity */
 	Vector3 Steer (Vector3 desired) {
 		return desired - rb.velocity;
 	}
-		
+
+	/** Move as fast as possible toward a static point. */
 	public Vector3 Seek (Vector3 target) {
 		Vector3 desired = target - transform.position;
 		desired = desired.normalized * maxSpeed;
@@ -24,6 +26,8 @@ public class Vehicle : MonoBehaviour {
 	public Vector3 Seek (GameObject obj) {
 		return Seek (obj.transform.position);
 	}
+
+	/** Move as fast as possible away from a static point. */
 	public Vector3 Flee (Vector3 target) {
 		Vector3 desired = transform.position - target;
 		desired = desired.normalized * maxSpeed;
@@ -33,17 +37,19 @@ public class Vehicle : MonoBehaviour {
 		return Flee (obj.transform.position);
 	}
 
-	//move most of these to self-contained classes that implement ISteeringBehavior
-
+	/** Seek an object's future position. */
 	public Vector3 Pursue (GameObject obj) {
-		Vector3 target = obj.transform.position + obj.GetComponent<Rigidbody> ().velocity;
-		return Seek (target);
-	}
-	public Vector3 Evade (GameObject obj) {
-		Vector3 target = obj.transform.position + obj.GetComponent<Rigidbody> ().velocity;
-		return Flee (target);
+		Vector3 future = obj.transform.position + obj.GetComponent<Rigidbody> ().velocity;
+		return Seek (future);
 	}
 
+	/** Flee from an object's future position. */
+	public Vector3 Evade (GameObject obj) {
+		Vector3 future = obj.transform.position + obj.GetComponent<Rigidbody> ().velocity;
+		return Flee (future);
+	}
+
+	/** Seek a target until it's close; then approach (seek) slowly. */
 	public Vector3 Arrive (Vector3 target) {
 		Vector3 desired = target - transform.position;
 
@@ -58,6 +64,10 @@ public class Vehicle : MonoBehaviour {
 		return Arrive (obj.transform.position);
 	}
 
+//	public Vector3 Wander() {
+//	}
+
+	//.Offset pursuit
 	//.Wander, Explore, Forage
 	//.FollowPath
 	//.ContainWithin
@@ -65,6 +75,7 @@ public class Vehicle : MonoBehaviour {
 	//.AvoidCollisions
 	//.Shadow
 
+	/** Steer away from objects. The closer an object, the greater the separation force from that object. */
 	public Vector3 Separate (GameObject[] objects) {
 		Vector3 sum = Vector3.zero;
 		if (objects.Length == 0)
@@ -80,6 +91,7 @@ public class Vehicle : MonoBehaviour {
 		return Steer (desired * maxSpeed);
 	}
 
+	/** Steer in the average direction of other objects. */
 	public Vector3 Align (GameObject[] objects) {
 		Vector3 dir = Vector3.zero;
 		if (objects.Length == 0)
@@ -91,6 +103,7 @@ public class Vehicle : MonoBehaviour {
 		return Steer (dir.normalized * maxSpeed);
 	}
 
+	/** Arrive at the center of mass of other objects. */
 	public Vector3 Cohere (GameObject[] objects) {
 		Vector3 center = Vector3.zero;
 		if (objects.Length == 0)
@@ -102,6 +115,7 @@ public class Vehicle : MonoBehaviour {
 		return Arrive (center / objects.Length);
 	}
 
+	/** Arrive at a point behind the leader. */
 	public Vector3 Follow (GameObject obj, float distance) {
 		Vector3 desired = obj.transform.position - obj.GetComponent<Rigidbody> ().velocity.normalized * distance;
 		return Arrive (desired);
