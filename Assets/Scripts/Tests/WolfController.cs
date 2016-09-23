@@ -8,6 +8,8 @@ public class WolfController : Vehicle {
 		GameObject closest = prey [0];
 		float min = Mathf.Infinity;
 		for (int i = 1; i < prey.Length; i++) {
+			if (!prey [i])
+				continue;
 			Vector3 diff = transform.position - prey [i].transform.position;
 			float d = diff.magnitude;
 			if (d < min) {

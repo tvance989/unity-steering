@@ -4,7 +4,6 @@ using System.Collections;
 public class Vehicle : MonoBehaviour {
 	public float maxSpeed = 10f;
 	public float maxForce = 3f;
-	public float arrivalRange = 5f;
 
 	protected Rigidbody rb;
 
@@ -23,9 +22,7 @@ public class Vehicle : MonoBehaviour {
 		desired = desired.normalized * maxSpeed;
 		return Steer (desired);
 	}
-	public Vector3 Seek (GameObject obj) {
-		return Seek (obj.transform.position);
-	}
+	public Vector3 Seek (GameObject obj) { return Seek (obj.transform.position); }
 
 	/** Move as fast as possible away from a static point. */
 	public Vector3 Flee (Vector3 target) {
@@ -33,9 +30,19 @@ public class Vehicle : MonoBehaviour {
 		desired = desired.normalized * maxSpeed;
 		return Steer (desired);
 	}
-	public Vector3 Flee (GameObject obj) {
-		return Flee (obj.transform.position);
+	public Vector3 Flee (GameObject obj) { return Flee (obj.transform.position); }
+
+	/** Seek a target until it's close; then approach (seek) slowly. */
+	public Vector3 Arrive (Vector3 target, float arrivalRange = 0) {
+		Vector3 desired = target - transform.position;
+
+		float d = desired.magnitude;
+		if (d < arrivalRange)
+			desired = desired.normalized * maxSpeed * d / arrivalRange;
+
+		return Steer (desired);
 	}
+	public Vector3 Arrive (GameObject obj, float arrivalRange = 0) { return Arrive (obj.transform.position, arrivalRange); }
 
 	/** Seek an object's future position. */
 	public Vector3 Pursue (GameObject obj) {
@@ -49,26 +56,27 @@ public class Vehicle : MonoBehaviour {
 		return Flee (future);
 	}
 
-	/** Seek a target until it's close; then approach (seek) slowly. */
-	public Vector3 Arrive (Vector3 target) {
-		Vector3 desired = target - transform.position;
+	protected Vector3 wanderDisplacement;
+	public Vector3 Wander(float offset, float radius, float wanderProbability) {
+		if (Random.value <= wanderProbability) {
+			Vector2 point = Random.insideUnitCircle.normalized;
+			wanderDisplacement = new Vector3 (point.x, 0, point.y) * radius;
+		}
 
-		float d = desired.magnitude;
-		desired = desired.normalized * maxSpeed;
-		if (d < arrivalRange)
-			desired *= d / arrivalRange;
-
-		return Steer (desired);
+		Vector3 desired = transform.position + rb.velocity.normalized * offset + wanderDisplacement;
+		return Seek (desired);
 	}
-	public Vector3 Arrive (GameObject obj) {
-		return Arrive (obj.transform.position);
+	public Vector3 Wander3D(float offset, float radius, float wanderProbability) {
+		if (Random.value <= wanderProbability)
+			wanderDisplacement = Random.onUnitSphere * radius;
+
+		Vector3 desired = transform.position + rb.velocity.normalized * offset + wanderDisplacement;
+		return Seek (desired);
 	}
 
-//	public Vector3 Wander() {
-//	}
-
-	//.Offset pursuit
-	//.Wander, Explore, Forage
+	//.Offset pursuit?
+	//.Explore
+	//.Forage
 	//.FollowPath
 	//.ContainWithin
 	//.AvoidObstacles
@@ -104,7 +112,7 @@ public class Vehicle : MonoBehaviour {
 	}
 
 	/** Arrive at the center of mass of other objects. */
-	public Vector3 Cohere (GameObject[] objects) {
+	public Vector3 Cohere (GameObject[] objects, float arrivalRange = 0) {
 		Vector3 center = Vector3.zero;
 		if (objects.Length == 0)
 			return center;
@@ -112,12 +120,12 @@ public class Vehicle : MonoBehaviour {
 		foreach (GameObject obj in objects)
 			center += obj.transform.position;
 
-		return Arrive (center / objects.Length);
+		return Arrive (center / objects.Length, arrivalRange);
 	}
 
 	/** Arrive at a point behind the leader. */
-	public Vector3 Follow (GameObject obj, float distance) {
-		Vector3 desired = obj.transform.position - obj.GetComponent<Rigidbody> ().velocity.normalized * distance;
-		return Arrive (desired);
+	public Vector3 Follow (GameObject leader, float distanceBehind, float arrivalRange = 0) {
+		Vector3 desired = leader.transform.position - leader.GetComponent<Rigidbody> ().velocity.normalized * distanceBehind;
+		return Arrive (desired, arrivalRange);
 	}
 }
