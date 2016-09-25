@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class BoidController : Vehicle {
+public class BoidController : MonoBehaviour {
 	public float separationWeight = 4f;
 	public float alignmentWeight = 5f;
 	public float cohesionWeight = 3f;
@@ -10,18 +10,18 @@ public class BoidController : Vehicle {
 	protected List<GameObject> neighbors;
 	protected List<GameObject> crowders;
 
-	protected Renderer renderer;
+	Vehicle vehicle;
+	Renderer renderer;
 
 	protected void Start () {
-		base.Start ();
-
 		neighbors = new List<GameObject> ();
 		crowders = new List<GameObject> ();
 
+		vehicle = GetComponent<Vehicle> ();
 		renderer = GetComponent<Renderer> ();
 	}
 
-	protected void Update () {
+	void Update () {
 //		transform.rotation = Quaternion.LookRotation (rb.velocity);
 
 		if (crowders.Count > 0)
@@ -35,27 +35,19 @@ public class BoidController : Vehicle {
 				renderer.material.color = Color.black;
 	}
 
-	protected void FixedUpdate() {
+	void FixedUpdate() {
 		Vector3 force = Vector3.zero;
 
-		force += Separate (crowders.ToArray ()) * separationWeight;
-		force += Align (neighbors.ToArray ()) * alignmentWeight;
-		force += Cohere (neighbors.ToArray ()) * cohesionWeight;
+		force += vehicle.Separate (crowders.ToArray ()) * separationWeight;
+		force += vehicle.Align (neighbors.ToArray ()) * alignmentWeight;
+		force += vehicle.Cohere (neighbors.ToArray ()) * cohesionWeight;
 
-		rb.AddForce (Vector3.ClampMagnitude (force, maxForce));
-	}
-
-	public void AddNeighbor(GameObject boid) {
-		neighbors.Add (boid);
-	}
-	public void RemoveNeighbor(GameObject boid) {
-		neighbors.Remove (boid);
+		vehicle.ApplyForce (force);
 	}
 
-	public void AddCrowder(GameObject boid) {
-		crowders.Add (boid);
-	}
-	public void RemoveCrowder(GameObject boid) {
-		crowders.Remove (boid);
-	}
+	public void AddNeighbor(GameObject boid) { neighbors.Add (boid); }
+	public void RemoveNeighbor(GameObject boid) { neighbors.Remove (boid); }
+
+	public void AddCrowder(GameObject boid) { crowders.Add (boid); }
+	public void RemoveCrowder(GameObject boid) { crowders.Remove (boid); }
 }

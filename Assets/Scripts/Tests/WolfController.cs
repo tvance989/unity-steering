@@ -19,6 +19,6 @@ public class WolfController : Vehicle {
 		}
 		if (min < 1)
 			Destroy (closest);
-		rb.AddForce (Pursue (closest));
+//		rb.AddForce (Pursue (closest));
 	}
 }

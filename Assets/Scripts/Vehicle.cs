@@ -2,32 +2,41 @@
 using System.Collections;
 
 public class Vehicle : MonoBehaviour {
-	public float maxSpeed = 10f;
-	public float maxForce = 3f;
+	public float maxSpeed = 20;
+	public float maxForce = 10;
 
-	protected Rigidbody rb;
+	Rigidbody rb;
+	Vector3 steering;
 
-	protected void Start () {
+	void Start () {
 		rb = GetComponent<Rigidbody> ();
+		steering = Vector3.zero;
 	}
+
+
+	public void ApplyForce (Vector3 force) {
+		rb.AddForce (Vector3.ClampMagnitude (force, maxForce));
+		if (rb.velocity.magnitude > maxSpeed)
+			rb.velocity *= 0.99f;
+	}
+
 
 	/** steering force = desired velocity - current velocity */
 	Vector3 Steer (Vector3 desired) {
 		return desired - rb.velocity;
 	}
 
+
 	/** Move as fast as possible toward a static point. */
 	public Vector3 Seek (Vector3 target) {
-		Vector3 desired = target - transform.position;
-		desired = desired.normalized * maxSpeed;
+		Vector3 desired = (target - transform.position).normalized * maxSpeed;
 		return Steer (desired);
 	}
 	public Vector3 Seek (GameObject obj) { return Seek (obj.transform.position); }
 
 	/** Move as fast as possible away from a static point. */
 	public Vector3 Flee (Vector3 target) {
-		Vector3 desired = transform.position - target;
-		desired = desired.normalized * maxSpeed;
+		Vector3 desired = (transform.position - target).normalized * maxSpeed;
 		return Steer (desired);
 	}
 	public Vector3 Flee (GameObject obj) { return Flee (obj.transform.position); }
@@ -57,6 +66,8 @@ public class Vehicle : MonoBehaviour {
 	}
 
 	protected Vector3 wanderDisplacement = Vector3.zero;
+	//.use maxspeed instead of passing offset
+	//.no params. just find a good balance.
 	public Vector3 Wander(float offset, float radius, float wanderProbability) {
 		if (Random.value <= wanderProbability) {
 			Vector2 point = Random.insideUnitCircle.normalized;
@@ -126,8 +137,6 @@ public class Vehicle : MonoBehaviour {
 	/** Arrive at a point behind the leader. */
 	//.need param for things to separate from? or just handle that in the controller?
 	public Vector3 Follow (GameObject leader, float followDistance, float bufferLength, float arrivalRange) {
-		Vector3 force = Vector3.zero;
-
 		Vector3 lv = leader.GetComponent<Rigidbody> ().velocity;
 
 		float d = (leader.transform.position - gameObject.transform.position).magnitude;
@@ -149,6 +158,6 @@ public class Vehicle : MonoBehaviour {
 			return Arrive (desired, arrivalRange);
 		}
 
-		return force;
+		return Vector3.zero;
 	}
 }

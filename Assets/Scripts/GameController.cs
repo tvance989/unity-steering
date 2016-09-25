@@ -2,15 +2,17 @@
 using System.Collections;
 
 public class GameController : MonoBehaviour {
-	public BoidController boid;
+	public GameObject boid;
 	public int numBoids;
 
 	void Start () {
 		for (int i = 0; i < numBoids; i++) {
-			BoidController obj = (BoidController)Instantiate (boid, Random.insideUnitSphere * 25, Quaternion.identity);
-			Vector3 pos = obj.gameObject.transform.position;
-			obj.gameObject.transform.position = new Vector3 (pos.x, Mathf.Abs (pos.y), pos.z);
-			obj.gameObject.GetComponent<Rigidbody> ().AddForce (Random.insideUnitSphere * obj.maxSpeed, ForceMode.Impulse);
+			GameObject obj = (GameObject)Instantiate (boid, Random.insideUnitSphere * 25, Quaternion.identity);
+
+			Vector3 pos = obj.transform.position;
+			obj.transform.position = new Vector3 (pos.x, Mathf.Abs (pos.y), pos.z);
+
+			obj.GetComponent<Rigidbody> ().AddForce (Random.insideUnitSphere * 10, ForceMode.Impulse);
 		}
 	}
 }

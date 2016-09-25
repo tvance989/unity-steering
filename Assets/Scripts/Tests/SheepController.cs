@@ -5,6 +5,6 @@ public class SheepController : Vehicle {
 	public GameObject predator;
 
 	void FixedUpdate () {
-		rb.AddForce (Evade (predator));
+//		rb.AddForce (Evade (predator));
 	}
 }
