@@ -56,7 +56,7 @@ public class Vehicle : MonoBehaviour {
 		return Flee (future);
 	}
 
-	protected Vector3 wanderDisplacement;
+	protected Vector3 wanderDisplacement = Vector3.zero;
 	public Vector3 Wander(float offset, float radius, float wanderProbability) {
 		if (Random.value <= wanderProbability) {
 			Vector2 point = Random.insideUnitCircle.normalized;
@@ -124,8 +124,31 @@ public class Vehicle : MonoBehaviour {
 	}
 
 	/** Arrive at a point behind the leader. */
-	public Vector3 Follow (GameObject leader, float distanceBehind, float arrivalRange = 0) {
-		Vector3 desired = leader.transform.position - leader.GetComponent<Rigidbody> ().velocity.normalized * distanceBehind;
-		return Arrive (desired, arrivalRange);
+	//.need param for things to separate from? or just handle that in the controller?
+	public Vector3 Follow (GameObject leader, float followDistance, float bufferLength, float arrivalRange) {
+		Vector3 force = Vector3.zero;
+
+		Vector3 lv = leader.GetComponent<Rigidbody> ().velocity;
+
+		float d = (leader.transform.position - gameObject.transform.position).magnitude;
+
+		float bufferRadius = followDistance / 2;
+
+		if (d < bufferRadius) {
+			// If way too close, just get away.
+			return Flee (leader);
+		} else if (d < bufferLength + bufferRadius) {
+			// If kinda close, see if they're in front of the leader and evade if necessary.
+			RaycastHit hit;
+			if (Physics.SphereCast (leader.transform.position, bufferRadius, lv, out hit, bufferLength))
+				if (hit.collider.gameObject == this.gameObject)
+					return Evade (leader);
+		} else {
+			// Arrive at point behind the leader.
+			Vector3 desired = leader.transform.position - lv.normalized * followDistance;
+			return Arrive (desired, arrivalRange);
+		}
+
+		return force;
 	}
 }

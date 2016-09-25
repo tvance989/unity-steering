@@ -13,9 +13,12 @@ public class TesterController : MonoBehaviour {
 	}
 	
 	void FixedUpdate () {
+		rb.AddForce (vehicle.Follow (mark, 1, 4, 0.5f) * 2);
+		return;
+
 		if((transform.position - mark.transform.position).magnitude < 10)
-			rb.AddForce (vehicle.Evade (mark) * 7);
+			rb.AddForce (vehicle.Evade (mark));
 		else
-			rb.AddForce (vehicle.Wander (3, 2, 0.1f) * 3);
+			rb.AddForce (vehicle.Wander (3, 2, 0.1f) * 2);
 	}
 }
