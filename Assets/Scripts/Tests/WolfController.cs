@@ -1,24 +1,34 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
-public class WolfController : Vehicle {
-	public GameObject[] prey;
+public class WolfController : MonoBehaviour {
+	Vehicle vehicle;
+	GameObject prey;
+
+	void Start () {
+		vehicle = GetComponent<Vehicle> ();
+	}
 
 	void FixedUpdate () {
-		GameObject closest = prey [0];
-		float min = Mathf.Infinity;
-		for (int i = 1; i < prey.Length; i++) {
-			if (!prey [i])
-				continue;
-			Vector3 diff = transform.position - prey [i].transform.position;
-			float d = diff.magnitude;
-			if (d < min) {
-				closest = prey [i];
-				min = d;
+		if (prey) {
+			vehicle.ApplyForce (vehicle.Pursue (prey));
+			if ((prey.transform.position - transform.position).magnitude < 2) {
+				Destroy (prey);
+				prey = null;
 			}
+		} else {
+			vehicle.ApplyForce (vehicle.Wander ());
 		}
-		if (min < 1)
-			Destroy (closest);
-//		rb.AddForce (Pursue (closest));
+	}
+
+	void OnTriggerEnter (Collider other) {
+		if (!prey && other.CompareTag ("Sheep"))
+			prey = other.gameObject;
+	}
+
+	void OnTriggerExit (Collider other) {
+		if (other.gameObject == prey)
+			prey = null;
 	}
 }

@@ -6,11 +6,11 @@ public class Vehicle : MonoBehaviour {
 	public float maxForce = 10;
 
 	Rigidbody rb;
-	Vector3 steering;
+	Vector3 wanderDirection;
 
 	void Start () {
 		rb = GetComponent<Rigidbody> ();
-		steering = Vector3.zero;
+		wanderDirection = Random.insideUnitCircle.normalized * maxSpeed;
 	}
 
 
@@ -22,10 +22,9 @@ public class Vehicle : MonoBehaviour {
 
 
 	/** steering force = desired velocity - current velocity */
-	Vector3 Steer (Vector3 desired) {
+	public Vector3 Steer (Vector3 desired) {
 		return desired - rb.velocity;
 	}
-
 
 	/** Move as fast as possible toward a static point. */
 	public Vector3 Seek (Vector3 target) {
@@ -42,7 +41,8 @@ public class Vehicle : MonoBehaviour {
 	public Vector3 Flee (GameObject obj) { return Flee (obj.transform.position); }
 
 	/** Seek a target until it's close; then approach (seek) slowly. */
-	public Vector3 Arrive (Vector3 target, float arrivalRange = 0) {
+	public Vector3 Arrive (Vector3 target) {
+		float arrivalRange = 2;//.arbitrary
 		Vector3 desired = target - transform.position;
 
 		float d = desired.magnitude;
@@ -51,7 +51,7 @@ public class Vehicle : MonoBehaviour {
 
 		return Steer (desired);
 	}
-	public Vector3 Arrive (GameObject obj, float arrivalRange = 0) { return Arrive (obj.transform.position, arrivalRange); }
+	public Vector3 Arrive (GameObject obj) { return Arrive (obj.transform.position); }
 
 	/** Seek an object's future position. */
 	public Vector3 Pursue (GameObject obj) {
@@ -65,23 +65,19 @@ public class Vehicle : MonoBehaviour {
 		return Flee (future);
 	}
 
-	protected Vector3 wanderDisplacement = Vector3.zero;
-	//.use maxspeed instead of passing offset
-	//.no params. just find a good balance.
-	public Vector3 Wander(float offset, float radius, float wanderProbability) {
-		if (Random.value <= wanderProbability) {
-			Vector2 point = Random.insideUnitCircle.normalized;
-			wanderDisplacement = new Vector3 (point.x, 0, point.y) * radius;
-		}
+	public Vector3 Wander() {
+		float jitter = 15;//.arbitrary
+		float angle = jitter;
+		if (Random.value < 0.5f)
+			angle = -jitter;
 
-		Vector3 desired = transform.position + rb.velocity.normalized * offset + wanderDisplacement;
-		return Seek (desired);
-	}
-	public Vector3 Wander3D(float offset, float radius, float wanderProbability) {
-		if (Random.value <= wanderProbability)
-			wanderDisplacement = Random.onUnitSphere * radius;
+		wanderDirection = Quaternion.AngleAxis (angle, Vector3.up) * wanderDirection;
 
-		Vector3 desired = transform.position + rb.velocity.normalized * offset + wanderDisplacement;
+		float radius = maxSpeed * 0.4f;//.arbitrary
+		Vector3 center = rb.velocity.normalized * (maxSpeed - radius);
+		Vector3 displacement = wanderDirection * radius;
+
+		Vector3 desired = transform.position + center + displacement;
 		return Seek (desired);
 	}
 
@@ -123,7 +119,7 @@ public class Vehicle : MonoBehaviour {
 	}
 
 	/** Arrive at the center of mass of other objects. */
-	public Vector3 Cohere (GameObject[] objects, float arrivalRange = 0) {
+	public Vector3 Cohere (GameObject[] objects) {
 		Vector3 center = Vector3.zero;
 		if (objects.Length == 0)
 			return center;
@@ -131,12 +127,12 @@ public class Vehicle : MonoBehaviour {
 		foreach (GameObject obj in objects)
 			center += obj.transform.position;
 
-		return Arrive (center / objects.Length, arrivalRange);
+		return Arrive (center / objects.Length);
 	}
 
 	/** Arrive at a point behind the leader. */
 	//.need param for things to separate from? or just handle that in the controller?
-	public Vector3 Follow (GameObject leader, float followDistance, float bufferLength, float arrivalRange) {
+	public Vector3 Follow (GameObject leader, float followDistance, float bufferLength) {
 		Vector3 lv = leader.GetComponent<Rigidbody> ().velocity;
 
 		float d = (leader.transform.position - gameObject.transform.position).magnitude;
@@ -149,14 +145,26 @@ public class Vehicle : MonoBehaviour {
 		} else if (d < bufferLength + bufferRadius) {
 			// If kinda close, see if they're in front of the leader and evade if necessary.
 			RaycastHit hit;
+			//.gotta use spherecastall. otherwise it just returns the "first hit"
 			if (Physics.SphereCast (leader.transform.position, bufferRadius, lv, out hit, bufferLength))
 				if (hit.collider.gameObject == this.gameObject)
 					return Evade (leader);
 		} else {
 			// Arrive at point behind the leader.
 			Vector3 desired = leader.transform.position - lv.normalized * followDistance;
-			return Arrive (desired, arrivalRange);
+			return Arrive (desired);
 		}
+
+		return Vector3.zero;
+	}
+
+	public Vector3 AvoidObstacles() {
+		float distance = maxSpeed / 2;
+		float radius = 1;//.arbitrary
+
+		RaycastHit hit;
+		if (Physics.SphereCast (transform.position, radius, rb.velocity, out hit, distance))
+			return Steer ((rb.velocity.normalized * distance - hit.collider.gameObject.transform.position).normalized * maxSpeed);
 
 		return Vector3.zero;
 	}

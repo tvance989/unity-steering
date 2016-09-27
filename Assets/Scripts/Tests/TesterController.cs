@@ -13,8 +13,12 @@ public class TesterController : MonoBehaviour {
 	void FixedUpdate () {
 		Vector3 force = Vector3.zero;
 
-//		force += vehicle.Follow (mark, 1, 4, 0.5f);
-		force += EvadeOrWander ();
+//		force += vehicle.Follow (mark, 1, 4);
+//		force += EvadeOrWander ();
+//		force += vehicle.Pursue (mark);
+//		force += vehicle.Wander ();
+		force += vehicle.Seek (mark);
+		force += vehicle.AvoidObstacles () * 3;
 
 		vehicle.ApplyForce (force);
 	}
@@ -23,6 +27,6 @@ public class TesterController : MonoBehaviour {
 		if((transform.position - mark.transform.position).magnitude < 10)
 			return vehicle.Evade (mark);
 		else
-			return vehicle.Wander (3, 2, 0.1f);
+			return vehicle.Wander ();
 	}
 }
