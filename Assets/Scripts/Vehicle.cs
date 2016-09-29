@@ -42,12 +42,14 @@ public class Vehicle : MonoBehaviour {
 
 	/** Seek a target until it's close; then approach (seek) slowly. */
 	public Vector3 Arrive (Vector3 target) {
-		float arrivalRange = 2;//.arbitrary
-		Vector3 desired = target - transform.position;
+		float radius = maxSpeed;//.find a balance
 
+		Vector3 desired = target - transform.position;
 		float d = desired.magnitude;
-		if (d < arrivalRange)
-			desired = desired.normalized * maxSpeed * d / arrivalRange;
+
+		desired = desired.normalized * maxSpeed;
+		if (d < radius)
+			desired *= d / radius;
 
 		return Steer (desired);
 	}
@@ -66,15 +68,15 @@ public class Vehicle : MonoBehaviour {
 	}
 
 	public Vector3 Wander() {
-		float jitter = 15;//.arbitrary
+		float jitter = 10;//.arbitrary
 		float angle = jitter;
 		if (Random.value < 0.5f)
 			angle = -jitter;
 
 		wanderDirection = Quaternion.AngleAxis (angle, Vector3.up) * wanderDirection;
 
-		float radius = maxSpeed * 0.4f;//.arbitrary
-		Vector3 center = rb.velocity.normalized * (maxSpeed - radius);
+		float radius = maxSpeed * 0.2f;//.arbitrary
+		Vector3 center = rb.velocity.normalized * (maxSpeed - radius);//.console error? "Object reference not set to an instance of an object"
 		Vector3 displacement = wanderDirection * radius;
 
 		Vector3 desired = transform.position + center + displacement;
@@ -86,8 +88,6 @@ public class Vehicle : MonoBehaviour {
 	//.Forage
 	//.FollowPath
 	//.ContainWithin
-	//.AvoidObstacles
-	//.AvoidCollisions
 	//.Shadow
 
 	/** Steer away from objects. The closer an object, the greater the separation force from that object. */
@@ -158,13 +158,58 @@ public class Vehicle : MonoBehaviour {
 		return Vector3.zero;
 	}
 
-	public Vector3 AvoidObstacles() {
-		float distance = maxSpeed / 2;
-		float radius = 1;//.arbitrary
+	public Vector3 AvoidObstacles () {
+		//.find a good balance
+		float seconds = 1;
+		float distance = rb.velocity.magnitude * seconds;
+		float radius = 1;//.arbitrary. use objects' radii instead
 
 		RaycastHit hit;
 		if (Physics.SphereCast (transform.position, radius, rb.velocity, out hit, distance))
-			return Steer ((rb.velocity.normalized * distance - hit.collider.gameObject.transform.position).normalized * maxSpeed);
+//			return Steer ((rb.velocity.normalized * distance - hit.collider.gameObject.transform.position).normalized * maxSpeed);
+			return Flee (hit.collider.gameObject.transform.position);
+
+		return Vector3.zero;
+	}
+
+	public Vector3 AvoidCollisions () {
+		//.find a good balance
+		float seconds = 1;
+		float distance = rb.velocity.magnitude * seconds;
+
+		foreach (Collider other in Physics.OverlapSphere (transform.position, distance)) {
+			Rigidbody rb2 = other.gameObject.GetComponent<Rigidbody> ();
+
+			if (rb2 != null) {
+				Vector3 p1;
+				Vector3 p2;
+				// if the lines aren't parallel
+				if (Math3d.ClosestPointsOnTwoLines (out p1, out p2, transform.position, rb.velocity, other.gameObject.transform.position, rb2.velocity)) {
+					float t1 = (p1 - transform.position).sqrMagnitude / rb.velocity.magnitude;
+					float t2 = (p2 - other.gameObject.transform.position).sqrMagnitude / rb2.velocity.magnitude;
+					// if the "collision" is at the same space-time
+					if (Mathf.Abs (t2 - t1) < 1) {
+						// if the collision is close enough to detect
+						if ((p1 - transform.position).magnitude < distance) {
+							if ((p2 - p1).magnitude < 1) {//.use object radii instead
+								return Evade (other.gameObject);
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return Vector3.zero;
+	}
+
+	public Vector3 Queue () {
+		float distance = rb.velocity.magnitude;//.
+		
+		RaycastHit hit;
+		if (Physics.Raycast (transform.position, rb.velocity, distance)) {
+			return -rb.velocity * 0.8f;//.arbitrary
+		}
 
 		return Vector3.zero;
 	}

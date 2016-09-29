@@ -11,14 +11,22 @@ public class WolfController : MonoBehaviour {
 	}
 
 	void FixedUpdate () {
+		Vector3 force = Vector3.zero;
+
 		if (prey) {
-			vehicle.ApplyForce (vehicle.Pursue (prey));
-			if ((prey.transform.position - transform.position).magnitude < 2) {
-				Destroy (prey);
-				prey = null;
-			}
+			force += vehicle.Pursue (prey);
 		} else {
-			vehicle.ApplyForce (vehicle.Wander ());
+			force += vehicle.Wander ();
+			force += vehicle.AvoidObstacles ();
+		}
+
+		vehicle.ApplyForce (force);
+	}
+
+	void OnCollisionEnter (Collision other) {
+		if (other.gameObject == prey) {
+			Destroy (other.gameObject);
+			prey = null;
 		}
 	}
 

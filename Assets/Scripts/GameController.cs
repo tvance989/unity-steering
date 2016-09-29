@@ -2,17 +2,26 @@
 using System.Collections;
 
 public class GameController : MonoBehaviour {
-	public GameObject boid;
-	public int numBoids;
+	public GameObject wolf;
+	public GameObject sheep;
+
+	public int numWolves;
+	public int numSheep;
 
 	void Start () {
-		for (int i = 0; i < numBoids; i++) {
-			GameObject obj = (GameObject)Instantiate (boid, Random.insideUnitSphere * 25, Quaternion.identity);
+		SpawnWolves (numWolves);
+		SpawnSheep (numSheep);
+	}
 
-			Vector3 pos = obj.transform.position;
-			obj.transform.position = new Vector3 (pos.x, Mathf.Abs (pos.y), pos.z);
+	void SpawnWolves (int n) {
+		for (int i = 0; i < n; i++) {
+			GameObject obj = (GameObject)Instantiate (wolf, new Vector3 (Random.Range (-40, 40), 1, Random.Range (-40, 40)), Quaternion.identity);
+		}
+	}
 
-			obj.GetComponent<Rigidbody> ().AddForce (Random.insideUnitSphere * 10, ForceMode.Impulse);
+	void SpawnSheep (int n) {
+		for (int i = 0; i < n; i++) {
+			GameObject obj = (GameObject)Instantiate (sheep, new Vector3 (Random.Range (-40, 40), 0.5f, Random.Range (-40, 40)), Quaternion.identity);
 		}
 	}
 }
