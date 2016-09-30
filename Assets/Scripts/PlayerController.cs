@@ -2,9 +2,6 @@
 using System.Collections;
 
 public class PlayerController : MonoBehaviour {
-	public float turnForce;
-	public float jumpForce;
-
 	Vehicle vehicle;
 
 	void Start() {
@@ -16,7 +13,7 @@ public class PlayerController : MonoBehaviour {
 
 		force += vehicle.Steer (Vector3.forward * Input.GetAxis ("Vertical") * vehicle.maxSpeed);
 		force += vehicle.Steer (Vector3.right * Input.GetAxis ("Horizontal") * vehicle.maxSpeed);
-		force += PlayItSafe () * 0.2f;
+		force += PlayItSafe () * 0.3f;
 
 		vehicle.ApplyForce (force);
 	}

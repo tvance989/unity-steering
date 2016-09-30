@@ -2,26 +2,25 @@
 using System.Collections;
 
 public class GameController : MonoBehaviour {
-	public GameObject wolf;
-	public GameObject sheep;
+	public GameObject fox;
+	public GameObject rabbit;
+	public GameObject carrot;
 
-	public int numWolves;
-	public int numSheep;
+	public int numFoxes;
+	public int numRabbits;
+	public int numCarrots;
+
+	Vector3 playerPos;
 
 	void Start () {
-		SpawnWolves (numWolves);
-		SpawnSheep (numSheep);
+		Spawn (fox, numFoxes);
+		Spawn (rabbit, numRabbits);
+		Spawn (carrot, numCarrots);
 	}
 
-	void SpawnWolves (int n) {
-		for (int i = 0; i < n; i++) {
-			GameObject obj = (GameObject)Instantiate (wolf, new Vector3 (Random.Range (-40, 40), 1, Random.Range (-40, 40)), Quaternion.identity);
-		}
-	}
-
-	void SpawnSheep (int n) {
-		for (int i = 0; i < n; i++) {
-			GameObject obj = (GameObject)Instantiate (sheep, new Vector3 (Random.Range (-40, 40), 0.5f, Random.Range (-40, 40)), Quaternion.identity);
+	void Spawn (GameObject prefab, int number) {
+		for (int i = 0; i < number; i++) {
+			Instantiate (prefab, new Vector3 (Random.Range (-40, 40), 0.5f, Random.Range (-40, 40)), Quaternion.identity);
 		}
 	}
 }
