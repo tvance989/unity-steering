@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Animal : MonoBehaviour {
+public class Animal : Vehicle {
 	public GameObject baby;
 	public Color maleColor;
 	public Color femaleColor;
@@ -13,8 +13,6 @@ public class Animal : MonoBehaviour {
 	public float fastingTime;
 	public float starvationTime;
 	public float abstainingTime;
-
-	Vehicle vehicle;
 
 	GameObject predator;
 	GameObject food;
@@ -28,14 +26,20 @@ public class Animal : MonoBehaviour {
 	enum Sex {Male, Female};
 	Sex sex;
 
-	void Start () {
-		vehicle = GetComponent<Vehicle> ();
+	GameObject game;
+	Rigidbody asdf;
 
+	void Start () {
 		lastMeal = Time.time + Random.Range (0, fastingTime);
 		lastSex = Time.time + Random.Range (0, abstainingTime);
 
 		sex = Random.value < 0.5f ? Sex.Male : Sex.Female;
 		GetComponent<Renderer> ().material.color = sex == Sex.Male ? maleColor : femaleColor;
+
+		Debug.Log (GetInstanceID ().ToString () + " is born");
+
+		game = GameObject.FindGameObjectWithTag ("GameController");
+		asdf = GetComponent<Rigidbody> ();
 	}
 
 	void Update () {
@@ -79,38 +83,48 @@ public class Animal : MonoBehaviour {
 				}
 			}
 		}
+
+		transform.rotation = Quaternion.LookRotation (asdf.velocity, Vector3.up);//.
 	}
 
 	void FixedUpdate () {
 		Vector3 force = Vector3.zero;
 
 		if (predator) {
-			force += vehicle.Evade (predator) * 4;
-			force += vehicle.AvoidObstacles ();
+			force += Evade (predator) * 4;
+			force += AvoidObstacles ();
 		} else if (food) {
-			force += vehicle.Pursue (food);
+			force += Pursue (food);
 		} else if (mate) {
-			force += vehicle.Pursue (mate);
+			force += Pursue (mate) * 2;
 		} else {
-			force += vehicle.Wander () * 2;
-			force += vehicle.AvoidObstacles ();
+			force += Wander ();
+			force += AvoidObstacles ();
 		}
 
-		vehicle.ApplyForce (force);
+		ApplyForce (force);
 	}
 
 	void OnCollisionEnter (Collision collision) {
 		if (collision.gameObject == food) {
+			Debug.Log (GetInstanceID ().ToString () + " eats " + collision.gameObject.GetInstanceID ());
 			Destroy (collision.gameObject);
 			lastMeal = Time.time;
 		} else if (collision.gameObject == mate) {
+			Debug.Log (GetInstanceID ().ToString () + " does it with " + collision.gameObject.GetInstanceID ());
 			lastSex = Time.time;
-			if (GetSex () == Sex.Female)
-				Instantiate (baby, transform.position, Quaternion.identity);
+			if (GetSex () == Sex.Female) {
+				GameObject baby = GiveBirth ();
+				Debug.Log (GetInstanceID ().ToString () + " gives birth to " + baby.GetInstanceID ());
+			}
 		}
 	}
 
 	Sex GetSex () {
 		return sex;
+	}
+
+	GameObject GiveBirth () {
+		return (GameObject)Instantiate (baby, transform.position, Quaternion.identity);
 	}
 }

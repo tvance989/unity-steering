@@ -8,8 +8,11 @@ public class Vehicle : MonoBehaviour {
 	Rigidbody rb;
 	Vector3 wanderDirection;
 
-	void Start () {
+	void Awake () {
 		rb = GetComponent<Rigidbody> ();
+	}
+
+	void Start () {
 		wanderDirection = Random.insideUnitCircle.normalized * maxSpeed;
 	}
 
