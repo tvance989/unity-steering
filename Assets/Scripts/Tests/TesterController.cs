@@ -1,35 +1,42 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class TesterController : MonoBehaviour {
+public class TesterController : Vehicle {
 	public GameObject mark;
 
-	Vehicle vehicle;
-
-	void Start () {
-		vehicle = GetComponent<Vehicle> ();
-	}
+	int num_collisions = 0;
 	
 	void FixedUpdate () {
 		Vector3 force = Vector3.zero;
 
-//		force += vehicle.Follow (mark, 1, 4);
+//		force += Follow (mark, 1, 4);
 //		force += EvadeOrWander ();
-//		force += vehicle.Pursue (mark);
-		force += vehicle.Wander ();
-//		force += vehicle.Seek (mark);
-		force += vehicle.AvoidObstacles () * 2;
-		force += vehicle.AvoidCollisions () * 5;
-//		force += vehicle.Arrive (Vector3.up);
-//		force += vehicle.Evade (mark);
+		force += Arrive (mark);
+		force += Wander ();
+//		force += Seek (mark);
+		force += AvoidObstacles () * 3;
+		force += AvoidCollisions () * 2;
+//		force += Arrive (Vector3.up);
+//		force += Evade (mark);
 
-		vehicle.ApplyForce (force);
+		ApplyForce (force);
 	}
 
 	Vector3 EvadeOrWander() {
 		if((transform.position - mark.transform.position).magnitude < 10)
-			return vehicle.Evade (mark);
+			return Evade (mark);
 		else
-			return vehicle.Wander ();
+			return Wander ();
+	}
+
+	void OnDrawGizmos () {
+//		Gizmos.DrawRay(transform.position, steering);
+//		Gizmos.DrawRay (ray1);
+//		Gizmos.DrawRay (ray2);
+	}
+
+	void OnCollisionEnter (Collision other) {
+		num_collisions++;
+		Debug.Log (num_collisions.ToString () + " collisions for Tester");
 	}
 }

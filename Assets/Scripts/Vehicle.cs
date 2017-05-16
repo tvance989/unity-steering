@@ -1,24 +1,33 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent (typeof (Rigidbody))]
+
 public class Vehicle : MonoBehaviour {
 	public float maxSpeed = 20;
 	public float maxForce = 10;
 
+	Vector3 steering;
 	Rigidbody rb;
+
 	Vector3 wanderDirection;
 
 	void Awake () {
+		steering = Vector3.zero;
 		rb = GetComponent<Rigidbody> ();
+		wanderDirection = Random.insideUnitCircle.normalized;
 	}
 
-	void Start () {
-		wanderDirection = Random.insideUnitCircle.normalized * maxSpeed;
-	}
 
+	public Vector3 GetSteering () {
+		return steering;
+	}
 
 	public void ApplyForce (Vector3 force) {
-		rb.AddForce (Vector3.ClampMagnitude (force, maxForce));
+		steering = Vector3.ClampMagnitude (force, maxForce);
+		rb.AddForce (steering);
+//		steering = Vector3.zero;
+
 		if (rb.velocity.magnitude > maxSpeed)
 			rb.velocity *= 0.99f;
 	}
@@ -72,15 +81,17 @@ public class Vehicle : MonoBehaviour {
 
 	public Vector3 Wander() {
 		float jitter = 10;//.arbitrary
-		float angle = jitter;
-		if (Random.value < 0.5f)
-			angle = -jitter;
+		float angle = Random.value < 0.5f ? jitter : -jitter;
 
 		wanderDirection = Quaternion.AngleAxis (angle, Vector3.up) * wanderDirection;
+		wanderDirection = new Vector3 (wanderDirection.x, 0, wanderDirection.z);//.idk why this was necessary
 
-		float radius = maxSpeed * 0.2f;//.arbitrary
-		Vector3 center = rb.velocity.normalized * (maxSpeed - radius);//.console error? "Object reference not set to an instance of an object"
+		float length = maxSpeed * 0.4f;//.arbitrary
+		float radius = length * 1.2f;//.arbitrary
+		Vector3 center = rb.velocity.normalized * length;//.arbitrary
 		Vector3 displacement = wanderDirection * radius;
+//		Debug.DrawRay (transform.position, center);
+//		Debug.DrawRay (transform.position + center, displacement);
 
 		Vector3 desired = transform.position + center + displacement;
 		return Seek (desired);
@@ -165,12 +176,19 @@ public class Vehicle : MonoBehaviour {
 		//.find a good balance
 		float seconds = 1;
 		float distance = rb.velocity.magnitude * seconds;
-		float radius = 1;//.arbitrary. use objects' radii instead
+		float radius = 1;//.arbitrary. use sum of objects' radii instead
 
 		RaycastHit hit;
-		if (Physics.SphereCast (transform.position, radius, rb.velocity, out hit, distance))
+		if (Physics.SphereCast (transform.position, radius, rb.velocity, out hit, distance)) {
 //			return Steer ((rb.velocity.normalized * distance - hit.collider.gameObject.transform.position).normalized * maxSpeed);
-			return Flee (hit.collider.gameObject.transform.position);
+			Vector3 away = (hit.point - hit.collider.gameObject.transform.position) * 2;
+//			Debug.DrawRay (hit.collider.gameObject.transform.position, (hit.point - hit.collider.gameObject.transform.position) * 20, Color.red, 1);
+//			Debug.DrawRay (transform.position, rb.velocity.normalized * distance, Color.red);
+//			Debug.DrawRay (hit.collider.gameObject.transform.position, away, Color.white, 1);
+			return Seek (away);
+		} else {
+//			Debug.DrawRay (transform.position, rb.velocity.normalized * distance, Color.cyan);
+		}
 
 		return Vector3.zero;
 	}

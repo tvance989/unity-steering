@@ -1,24 +1,18 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PlayerController : MonoBehaviour {
-	Vehicle vehicle;
-
-	void Start() {
-		vehicle = GetComponent<Vehicle> ();
-	}
-
+public class PlayerController : Vehicle {
 	void FixedUpdate() {
 		Vector3 force = Vector3.zero;
 
-		force += vehicle.Steer (Vector3.forward * Input.GetAxis ("Vertical") * vehicle.maxSpeed);
-		force += vehicle.Steer (Vector3.right * Input.GetAxis ("Horizontal") * vehicle.maxSpeed);
-		force += PlayItSafe () * 0.3f;
+		force += Steer (Vector3.forward * Input.GetAxis ("Vertical") * maxSpeed);
+		force += Steer (Vector3.right * Input.GetAxis ("Horizontal") * maxSpeed);
+		force += PlayItSafe () * 0.5f;
 
-		vehicle.ApplyForce (force);
+		ApplyForce (force);
 	}
 
 	Vector3 PlayItSafe() {
-		return vehicle.AvoidObstacles () + vehicle.AvoidCollisions ();
+		return AvoidObstacles () + AvoidCollisions ();
 	}
 }
