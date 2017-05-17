@@ -1,8 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-[RequireComponent (typeof (Vehicle))]
+[System.Serializable]
+public class DNA {
+	public float maxSpeed, maxForce; // Vehicle properties
+	public float sensoryRange; // How far can the animal see? (food, enemies, etc)
+	public float fastingTime, starvationTime, abstainingTime; // Biological functions
+}
 
+[RequireComponent (typeof (Vehicle))]
 public class Animal : MonoBehaviour {
 	public GameObject baby;
 	public Color maleColor;
@@ -11,10 +17,7 @@ public class Animal : MonoBehaviour {
 	public string predatorTag;
 	public string foodTag;
 
-	public float sensoryRange;
-	public float fastingTime;
-	public float starvationTime;
-	public float abstainingTime;
+	public DNA dna;
 
 	Vehicle vehicle;
 	Rigidbody rb;
@@ -37,8 +40,8 @@ public class Animal : MonoBehaviour {
 
 		isHungry = isHorny = false;
 
-		lastMeal = Time.time + Random.Range (0, fastingTime);
-		lastSex = Time.time + Random.Range (0, abstainingTime);
+		lastMeal = Time.time + Random.Range (0, dna.fastingTime);
+		lastSex = Time.time + Random.Range (0, dna.abstainingTime);
 
 		sex = Random.value < 0.5f ? Sex.Male : Sex.Female;
 
@@ -50,12 +53,12 @@ public class Animal : MonoBehaviour {
 	}
 
 	void Update () {
-		if (Time.time - lastMeal > starvationTime)
+		if (Time.time - lastMeal > dna.starvationTime)
 			Destroy (this.gameObject);
 
-		if (Time.time - lastMeal > fastingTime)
+		if (Time.time - lastMeal > dna.fastingTime)
 			isHungry = true;
-		if (Time.time - lastSex > abstainingTime)
+		if (Time.time - lastSex > dna.abstainingTime)
 			isHorny = true;
 
 		float minPredator = Mathf.Infinity;
@@ -63,7 +66,7 @@ public class Animal : MonoBehaviour {
 		float minMate = Mathf.Infinity;
 		predator = food = mate = null;
 
-		foreach (Collider collider in Physics.OverlapSphere(transform.position, sensoryRange)) {
+		foreach (Collider collider in Physics.OverlapSphere(transform.position, dna.sensoryRange)) {
 			GameObject obj = collider.gameObject;
 			if (obj == this.gameObject)
 				continue;
@@ -123,7 +126,7 @@ public class Animal : MonoBehaviour {
 	void OnDrawGizmosSelected () {
 		Gizmos.DrawRay (transform.position, vehicle.GetSteering ());
 //		Gizmos.DrawRay (transform.position, rb.velocity);
-		Gizmos.DrawWireSphere (transform.position, sensoryRange);
+		Gizmos.DrawWireSphere (transform.position, dna.sensoryRange);
 
 		if (predator) {
 			Gizmos.DrawWireSphere (predator.transform.position, 2);
@@ -143,20 +146,20 @@ public class Animal : MonoBehaviour {
 	}
 
 	void Eat (GameObject obj) {
-		Debug.Log (GetInstanceID ().ToString () + " eats " + obj.GetInstanceID ());
+//		Debug.Log (GetInstanceID ().ToString () + " eats " + obj.GetInstanceID ());
 		Destroy (obj);
 		lastMeal = Time.time;
 		isHungry = false;
 	}
 
 	void Love (GameObject obj) {
-		Debug.Log (GetInstanceID ().ToString () + " does it with " + obj.GetInstanceID ());
+//		Debug.Log (GetInstanceID ().ToString () + " does it with " + obj.GetInstanceID ());
 		lastSex = Time.time;
 		isHorny = false;
 
 		if (GetSex () == Sex.Female) {
-			GameObject baby = GiveBirth ();
-			Debug.Log (GetInstanceID ().ToString () + " gives birth to " + baby.GetInstanceID ());
+			Animal newBaby = GiveBirth ();
+//			Debug.Log (GetInstanceID ().ToString () + " gives birth to " + newBaby.GetInstanceID ());
 		}
 	}
 
@@ -164,7 +167,27 @@ public class Animal : MonoBehaviour {
 		return sex;
 	}
 
-	GameObject GiveBirth () {
-		return (GameObject)Instantiate (baby, transform.position, Quaternion.identity);
+	Animal GiveBirth () {
+		GameObject obj = (GameObject)Instantiate (baby, transform.position, Quaternion.identity);
+		Animal newBaby = obj.GetComponent<Animal> ();
+
+		// Mutation
+		float mutationRate = 0.5f;//.arbitrary mutation rate
+		if (Random.value < mutationRate) {
+			newBaby.dna.maxSpeed = dna.maxSpeed + Random.Range (-200, 200) / 100f;
+			newBaby.GetComponent<Vehicle> ().maxSpeed = newBaby.dna.maxSpeed;
+			Debug.Log (gameObject.tag + " speed mutation: " + newBaby.dna.maxSpeed);
+		}
+		if (Random.value < mutationRate) {
+			newBaby.dna.maxForce = dna.maxForce + Random.Range (-200, 200) / 100f;
+			newBaby.GetComponent<Vehicle> ().maxForce = newBaby.dna.maxForce;
+			Debug.Log (gameObject.tag + " force mutation: " + newBaby.dna.maxForce);
+		}
+		if (Random.value < mutationRate) {
+			newBaby.dna.sensoryRange = dna.sensoryRange + Random.Range (-100, 100) / 100f;
+			Debug.Log (gameObject.tag + " perception mutation: " + newBaby.dna.sensoryRange);
+		}
+
+		return newBaby;
 	}
 }
